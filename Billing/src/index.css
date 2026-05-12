@@ -426,7 +426,7 @@ body {
   margin-top: 2px;
 }
 /* ===== RIGHT PANEL (BILL AREA) ===== */
-.right-panel {
+/* .right-panel {
   flex: 1;
   border-radius: 20px;
   padding: 18px;
@@ -438,8 +438,12 @@ body {
   gap: 12px;
 
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+} */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
-
 /* ===== CUSTOMER ===== */
 .customer-box {
   display: flex;
@@ -455,8 +459,13 @@ body {
 
 /* ===== CART ===== */
 .cart {
-  flex: 1;
-  overflow-y: auto;
+  /* flex: 1;
+  overflow-y: auto; */
+   flex: 1;              /* ✅ takes remaining space */
+  overflow-y: auto;     /* scroll if items increase */
+  padding: 10px;
+  min-height: 0;  
+  max-height: 45vh; 
 }
 
 /* ITEM */
@@ -520,9 +529,13 @@ body {
 
 /* ===== SUMMARY ===== */
 .summary {
-  padding: 10px;
+  /* padding: 10px; */
   border-radius: 12px;
   background: #f1f5f9;
+   padding: 2px;         /* reduce padding */
+  font-size: 12px; 
+    flex-shrink: 0;
+    
 }
 
 .row {
@@ -563,11 +576,18 @@ body {
 }
 
 /* ===== ACTION BUTTONS ===== */
-.actions {
+/* .actions {
   display: flex;
   gap: 10px;
+} */
+.actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  z-index: 10;
 }
-
 /* ===== GLOBAL ===== */
 body {
   margin: 0;
@@ -779,10 +799,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* CART */
-.cart {
+/* .cart {
   flex: 1;
   overflow-y: auto;
-}
+} */
 
 .cart-item {
   display: flex;
@@ -825,6 +845,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
+   margin: 2px 0;        /* less gap */
 }
 
 /* RIGHT ALIGN NUMBERS */
@@ -843,9 +864,10 @@ h1, h2, h3, h4, h5, h6 {
 
 /* TOTAL */
 .total-row {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: #2563eb;
+
 }
 .total {
   font-weight: bold;
@@ -860,6 +882,8 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== PAYMENT SECTION ===== */
 .payment-section {
   margin-top: 6px;
+  padding: 8px;
+    flex-shrink: 0;
 }
 
 .payment-title {
@@ -872,7 +896,7 @@ h1, h2, h3, h4, h5, h6 {
 .payment-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap:4px;
 }
 
 /* BUTTON CARD */
@@ -1597,4 +1621,75 @@ textarea {
 
 .qty-input:focus {
   border-color: #111;
+}
+.summary-toggle {
+  cursor: pointer;
+  font-size: 13px;
+  color: #007bff;
+  margin: 15px 0;
+  text-align: right;
+}
+
+.summary-toggle:hover {
+  text-decoration: underline;
+}
+.total-button {
+  background: #28a745;
+  color: #fff;
+  padding: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.total-button:hover {
+  background: #218838;
+}
+
+.summary-btn {
+  background: #007bff;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.summary-btn:hover {
+  background: #0056b3;
+}
+
+.total-btn {
+  background: #28a745;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.summary-details {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+
+.summary-divider {
+  border-top: 1px solid #ccc;
+  margin: 8px 0;
+  width: 100%;
 }

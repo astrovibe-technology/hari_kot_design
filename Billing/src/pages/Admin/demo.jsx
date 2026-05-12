@@ -28,7 +28,6 @@ const Reports = () => {
   const [endDate, setEndDate] = useState(today);
   const [shopId, setShopId] = useState("");
 
-  // ✅ NEW STATES
   const [searchBill, setSearchBill] = useState("");
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
@@ -88,42 +87,12 @@ const Reports = () => {
   }, []);
 
   // =========================
-  // FILTER REPORTS
+  // FILTER
   // =========================
   const filteredReports = reports.filter((bill) =>
     bill.bill_no.toLowerCase().includes(searchBill.toLowerCase())
   );
-  // =========================
-// WHATSAPP SHARE
-// =========================
-const shareWhatsApp = () => {
 
-  let message = `📊 Sales Report\n\n`;
-
-  // ✅ DATE RANGE
-  if (startDate && endDate) {
-    message += `📅 Date: ${startDate} to ${endDate}\n\n`;
-  } else if (startDate) {
-    message += `📅 Date: ${startDate}\n\n`;
-  } else {
-    message += `📅 Date: Today\n\n`;
-  }
-
-  // ✅ BILL DATA
-  filteredReports.forEach((bill, index) => {
-    message += `#${index + 1} ${bill.bill_no}\n`;
-    message += `₹ ${bill.grand_total} | ${bill.payment_mode}\n`;
-    message += `${new Date(bill.created_at).toLocaleString()}\n\n`;
-  });
-
-  // ✅ TOTALS
-  message += `\n------------------------\n`;
-  message += `Total Sales: ₹ ${Number(totalSales).toFixed(2)}\n`;
-  message += `Total GST: ₹ ${Number(totalGST).toFixed(2)}\n`;
-
-  const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-  window.open(url, "_blank");
-};
   // =========================
   // EXPORT EXCEL
   // =========================
@@ -185,39 +154,64 @@ const shareWhatsApp = () => {
     doc.save("Reports.pdf");
   };
 
+  // =========================
+  // WHATSAPP SHARE
+  // =========================
+  const shareWhatsApp = () => {
+    let message = `📊 Sales Report\n\n`;
+
+    if (startDate && endDate) {
+      message += `📅 Date: ${startDate} to ${endDate}\n\n`;
+    }
+
+    reports.forEach((bill, index) => {
+      message += `#${index + 1} ${bill.bill_no}\n`;
+      message += `₹ ${bill.grand_total} | ${bill.payment_mode}\n`;
+      message += `${new Date(bill.created_at).toLocaleString()}\n\n`;
+    });
+
+    message += `\n------------------------\n`;
+    message += `Total Sales: ₹ ${Number(totalSales).toFixed(2)}\n`;
+    message += `Total GST: ₹ ${Number(totalGST).toFixed(2)}\n`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
   return (
     <div className="container-fluid mt-2">
 
       {/* HEADER */}
-      {/* HEADER */}
-<div className="d-flex justify-content-between align-items-center mb-2">
-  <h5>📊 Reports</h5>
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <h5>📊 Reports</h5>
 
-  <div className="d-flex gap-2 align-items-center">
+        <div className="d-flex gap-2 align-items-center">
 
-    <button className="btn btn-sm btn-success" onClick={downloadExcel}>
-      Excel
-    </button>
+          {/* ✅ SEARCH NEAR BUTTONS */}
+          <input
+            type="text"
+            placeholder="Search Bill..."
+            className="form-control form-control-sm"
+            style={{ width: "150px" }}
+            value={searchBill}
+            onChange={(e) => setSearchBill(e.target.value)}
+          />
 
-    <button className="btn btn-sm btn-danger" onClick={downloadPDF}>
-      PDF
-    </button>
-      <button className="btn btn-sm btn-success" onClick={shareWhatsApp}>
-      WhatsApp
-    </button>
+          <button className="btn btn-sm btn-success" onClick={downloadExcel}>
+            Excel
+          </button>
 
-    {/* ✅ SEARCH MOVED HERE */}
-    <input
-      type="text"
-      placeholder="Search Bill..."
-      className="form-control form-control-sm"
-      style={{ width: "150px" }}
-      value={searchBill}
-      onChange={(e) => setSearchBill(e.target.value)}
-    />
+          <button className="btn btn-sm btn-danger" onClick={downloadPDF}>
+            PDF
+          </button>
 
-  </div>
-</div>
+          {/* ✅ WHATSAPP KEPT */}
+          <button className="btn btn-sm btn-success" onClick={shareWhatsApp}>
+            WhatsApp
+          </button>
+
+        </div>
+      </div>
 
       {/* FILTERS */}
       <div className="card shadow-sm mb-2">
@@ -225,30 +219,19 @@ const shareWhatsApp = () => {
           <div className="row g-2">
 
             <div className="col-md-3">
-              <input
-                type="date"
-                className="form-control form-control-sm"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <input type="date" className="form-control form-control-sm"
+                value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
 
             <div className="col-md-3">
-              <input
-                type="date"
-                className="form-control form-control-sm"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <input type="date" className="form-control form-control-sm"
+                value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
 
             {user.role === "admin" && (
               <div className="col-md-3">
-                <select
-                  className="form-select form-select-sm"
-                  value={shopId}
-                  onChange={(e) => setShopId(e.target.value)}
-                >
+                <select className="form-select form-select-sm"
+                  value={shopId} onChange={(e) => setShopId(e.target.value)}>
                   <option value="">All Shops</option>
                   {shops.map((shop) => (
                     <option key={shop.id} value={shop.id}>
@@ -260,46 +243,11 @@ const shareWhatsApp = () => {
             )}
 
             <div className="col-md-3">
-              <button
-                className="btn btn-sm btn-primary w-100"
-                onClick={fetchReports}
-              >
+              <button className="btn btn-sm btn-primary w-100" onClick={fetchReports}>
                 Apply
               </button>
             </div>
 
-          </div>
-        </div>
-      </div>
-
-            
-
-      {/* SUMMARY */}
-      <div className="row mb-2">
-        <div className="col-md-4">
-          <div className="card bg-primary text-white text-center">
-            <div className="card-body py-2">
-              <small>Total Bills</small>
-              <h6>{count}</h6>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-4">
-          <div className="card bg-success text-white text-center">
-            <div className="card-body py-2">
-              <small>Total Sales</small>
-              <h6>₹ {Number(totalSales).toFixed(2)}</h6>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-4">
-          <div className="card bg-info text-dark text-center">
-            <div className="card-body py-2">
-              <small>Total GST</small>
-              <h6>₹ {Number(totalGST).toFixed(2)}</h6>
-            </div>
           </div>
         </div>
       </div>
@@ -337,13 +285,11 @@ const shareWhatsApp = () => {
                     <td>{new Date(bill.created_at).toLocaleString()}</td>
 
                     <td>
-                      <button
-                        className="btn btn-sm btn-primary"
+                      <button className="btn btn-sm btn-primary"
                         onClick={() => {
                           setSelectedBill(bill);
                           setShowItemsModal(true);
-                        }}
-                      >
+                        }}>
                         View
                       </button>
                     </td>
@@ -352,9 +298,7 @@ const shareWhatsApp = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center">
-                    No Data Found
-                  </td>
+                  <td colSpan="9" className="text-center">No Data Found</td>
                 </tr>
               )}
             </tbody>
@@ -395,10 +339,8 @@ const shareWhatsApp = () => {
             </table>
 
             <div className="text-end">
-              <button
-                className="btn btn-sm btn-danger"
-                onClick={() => setShowItemsModal(false)}
-              >
+              <button className="btn btn-sm btn-danger"
+                onClick={() => setShowItemsModal(false)}>
                 Close
               </button>
             </div>

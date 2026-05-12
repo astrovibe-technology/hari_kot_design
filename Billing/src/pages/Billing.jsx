@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useRef } from "react";
 import { FaSearch, FaTrash } from "react-icons/fa";
 const API = "http://127.0.0.1:8000";
 
@@ -22,11 +22,13 @@ const Billing = () => {
   const [dateTime, setDateTime] = useState(new Date());
 
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [showSummaryDetails, setShowSummaryDetails] = useState(false);
   const [customer, setCustomer] = useState({
     name: "",
     phone: "",
     discount: "",
   });
+  const qtyRefs = useRef({});
 
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -128,21 +130,35 @@ const fetchBillNumber = async () => {
     console.log(err);
   }
 };
-  const addToCart = (product) => {
-    const exist = cart.find((item) => item.id === product.id);
-    if (exist) {
-      setCart(
-        cart.map((item) =>
-          item.id === product.id
-            ? { ...item, qty: item.qty + 1 }
-            : item
-        )
-      );
-    } else {
-      setCart([...cart, { ...product, qty: 1 }]);
-    }
-  };
+const addToCart = (product) => {
+  const exist = cart.find((item) => item.id === product.id);
 
+  let updatedCart;
+
+  if (exist) {
+    updatedCart = cart.map((item) =>
+      item.id === product.id
+        ? { ...item, qty: item.qty + 1 }
+        : item
+    );
+  } else {
+    updatedCart = [
+      ...cart,
+      {
+        ...product,
+        qty: 1,
+        unit: "kg",
+      },
+    ];
+  }
+
+  setCart(updatedCart);
+
+  // ✅ focus after render
+  setTimeout(() => {
+    qtyRefs.current[product.id]?.focus();
+  }, 100);
+};
   const updateQty = (id, type) => {
     setCart(
       cart
@@ -163,7 +179,10 @@ const fetchBillNumber = async () => {
   };
 
 const subtotal = cart.reduce(
-  (sum, item) => sum + item.price * (item.qty / 1000),
+  (sum, item) =>
+    sum +
+    item.price *
+      (item.unit === "kg" ? item.qty : item.qty / 1000),
   0
 );
 // CATEGORY WISE PRINT FUNCTION (NO DESIGN CHANGE)
@@ -283,12 +302,17 @@ Object.keys(grouped).forEach((category) => {
 
   const items = grouped[category];
 const subtotal = cart.reduce(
-  (sum, item) => sum + item.price * (item.qty / 1000),
+  (sum, item) =>
+    sum +
+    item.price *
+      (item.unit === "kg" ? item.qty : item.qty / 1000),
   0
 );
 
   const gst = items.reduce((sum, item) => {
-  const amount = item.price * (item.qty / 1000);
+  const amount =
+  item.price *
+  (item.unit === "kg" ? item.qty : item.qty / 1000);
 
   const gstAmount =
     (amount * item.gst) / (100 + item.gst);
@@ -361,15 +385,15 @@ const subtotal = cart.reduce(
           </div>
 
           <div class="col-qty">
-            ${item.qty}
+            ${item.qty} ${item.unit}
           </div>
-
+  
           <div class="col-price">
             ₹ ${item.price.toFixed(2)}
           </div>
 
           <div class="col-total">
-           ₹ ${(item.price * (item.qty / 1000)).toFixed(2)}
+           ₹ ${(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}
           </div>
 
         </div>
@@ -433,7 +457,9 @@ printWindow.onload = () => {
 };
 const totalGST = cart.reduce(
   (sum, item) => {
-    const amount = item.price * (item.qty / 1000);
+   const amount =
+  item.price *
+  (item.unit === "kg" ? item.qty : item.qty / 1000);
 
     const gstAmount =
   (amount * item.gst) / (100 + item.gst);
@@ -466,13 +492,14 @@ const saveBill = async () => {
       item_id: item.id,
 
       quantity: item.qty,
+      unit: item.unit, 
 
       item_price: item.price,
 
       gst_percent: item.gst,
 
       total_price:
-  item.price * (item.qty / 1000) ,
+  item.price * (item.unit === "kg" ? item.qty : item.qty / 1000) ,
 
       category_name: item.category,
 
@@ -505,6 +532,7 @@ const saveBill = async () => {
       shop_ids: shopIds,
 
       items: payloadItems,
+      unit: cart.length > 0 ? cart[0].unit : "kg",
     };
 
     console.log("FINAL PAYLOAD:", payload);
@@ -648,6 +676,31 @@ const filteredProducts = products.filter((p) =>
   ))}
 </div>
         </div>
+  <div className="payment-section">
+
+  {/* <div className="payment-title">Payment Mode</div> */}
+
+  <div className="payment-grid">
+    {[
+      { name: "Cash", icon: "💵", color: "cash" },
+      { name: "Card", icon: "💳", color: "card" },
+      { name: "UPI", icon: "📱", color: "upi" },
+      { name: "Other", icon: "🧾", color: "other" },
+    ].map((mode) => (
+      <div
+        key={mode.name}
+        className={`pay-btn ${mode.color} ${
+          paymentMode === mode.name ? "active" : ""
+        }`}
+        onClick={() => setPaymentMode(mode.name)}
+      >
+        <span className="icon">{mode.icon}</span>
+        <span className="label">{mode.name}</span>
+      </div>
+    ))}
+  </div>
+
+</div>
 
         {/* CUSTOMER */}
        <button
@@ -720,19 +773,36 @@ const filteredProducts = products.filter((p) =>
 
               <div className="qty">
 
- <input
+  <input
+  ref={(el) => (qtyRefs.current[item.id] = el)}
   type="number"
-  placeholder="grams"
   value={item.qty}
+  placeholder={item.unit === "g" ? "grams" : "kg"}
+  onFocus={(e) => e.target.select()} // ✅ auto select text
   onChange={(e) => {
-    const grams = parseFloat(e.target.value);
+    const value = e.target.value;
 
     setCart(
       cart.map((cartItem) =>
         cartItem.id === item.id
           ? {
               ...cartItem,
-              qty: isNaN(grams) ? 0 : grams, // ✅ STORE AS GRAMS
+              qty: value === "" ? "" : parseFloat(value),
+            }
+          : cartItem
+      )
+    );
+  }}
+  onBlur={() => {
+    setCart(
+      cart.map((cartItem) =>
+        cartItem.id === item.id
+          ? {
+              ...cartItem,
+              qty:
+                cartItem.qty === "" || isNaN(cartItem.qty)
+                  ? 1
+                  : cartItem.qty,
             }
           : cartItem
       )
@@ -740,11 +810,32 @@ const filteredProducts = products.filter((p) =>
   }}
   className="qty-input"
 />
+  {/* ✅ UNIT SELECT */}
+ <select
+  value={item.unit}
+  onChange={(e) => {
+    const newUnit = e.target.value;
+
+    setCart(
+      cart.map((cartItem) =>
+        cartItem.id === item.id
+          ? {
+              ...cartItem,
+              unit: newUnit, // ✅ ONLY change unit
+            }
+          : cartItem
+      )
+    );
+  }}
+  className="unit-select"
+>
+  <option value="g">g</option>
+  <option value="kg">kg</option>
+</select>
 
 </div>
-
               <div className="item-right">
-                <span>₹ {(item.price * (item.qty / 1000)).toFixed(2)}</span>
+                <span>₹ {(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}</span>
                 <FaTrash
                   className="delete"
                   onClick={() => removeItem(item.id)}
@@ -756,62 +847,57 @@ const filteredProducts = products.filter((p) =>
         </div>
 
         {/* SUMMARY */}
-      <div className="summary">
+     <div className="summary">
 
-  <div className="summary-row">
+  {/* ✅ SUBTOTAL BUTTON */}
+  <div
+    className="summary-btn"
+    onClick={() => setShowSummaryDetails(!showSummaryDetails)}
+  >
     <span>Subtotal</span>
-    <span className="amount">₹ {subtotal.toFixed(2)}</span>
-  </div>
-  <div className="summary-row">
-  <span>GST</span>
-  <span className="amount">₹ {totalGST.toFixed(2)}</span>
-</div>
-  <div className="summary-row">
-    <span>SGST</span>
-    <span className="amount">₹ {sgst.toFixed(2)}</span>
+    <span>₹ {subtotal.toFixed(2)}</span>
   </div>
 
-  <div className="summary-row">
-    <span>CGST</span>
-    <span className="amount">₹ {cgst.toFixed(2)}</span>
-  </div>
+  {/* ✅ EXPAND DETAILS */}
+ {showSummaryDetails && (
+  <div className="summary-details">
 
+    <div className="summary-row">
+      <span>GST</span>
+      <span className="amount">₹ {totalGST.toFixed(2)}</span>
+    </div>
+
+    <div className="summary-row">
+      <span>SGST</span>
+      <span className="amount">₹ {sgst.toFixed(2)}</span>
+    </div>
+
+    <div className="summary-row">
+      <span>CGST</span>
+      <span className="amount">₹ {cgst.toFixed(2)}</span>
+    </div>
+    <div className="summary-row">
+      <span>Total</span>
+      <span className="amount">₹ {total.toFixed(2)}</span>
+    </div>
+
+    {/* ✅ MOVE DIVIDER HERE */}
+    <div className="summary-divider"></div>
+
+  </div>
+)}
   <div className="summary-divider"></div>
 
-  <div className="summary-row total-row">
+  {/* ✅ TOTAL BUTTON (HIGHLIGHT) */}
+  <div className="total-btn">
     <span>Total</span>
-    <span className="amount">₹ {total.toFixed(2)}</span>
+    <span></span>
   </div>
 
 </div>
 
         {/* PAYMENT */}
-        <div className="payment-section">
-
-  <div className="payment-title">Payment Mode</div>
-
-  <div className="payment-grid">
-    {[
-      { name: "Cash", icon: "💵", color: "cash" },
-      { name: "Card", icon: "💳", color: "card" },
-      { name: "UPI", icon: "📱", color: "upi" },
-      { name: "Other", icon: "🧾", color: "other" },
-    ].map((mode) => (
-      <div
-        key={mode.name}
-        className={`pay-btn ${mode.color} ${
-          paymentMode === mode.name ? "active" : ""
-        }`}
-        onClick={() => setPaymentMode(mode.name)}
-      >
-        <span className="icon">{mode.icon}</span>
-        <span className="label">{mode.name}</span>
-      </div>
-    ))}
-  </div>
-
-</div>
-
+      
         {/* ACTIONS */}
         <div className="actions">
            <button
@@ -821,7 +907,7 @@ const filteredProducts = products.filter((p) =>
     // printCategoryWiseBills();
   }}
 >
-  Print
+  Print  ₹ {total.toFixed(0)}
 </button>
           {/* <button className="pay" onClick={() => setShowBill(true)}>
   PAY ₹ {total.toFixed(0)}
@@ -847,7 +933,7 @@ const filteredProducts = products.filter((p) =>
         {cart.map((item) => (
           <div key={item.id} className="bill-row">
             <span>{item.name} x {item.qty}</span>
-            <span>₹ {(item.price * (item.qty / 1000)).toFixed(2)}</span>
+            <span>₹ {(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}</span>
           </div>
         ))}
       </div>
@@ -883,7 +969,7 @@ const filteredProducts = products.filter((p) =>
     // printCategoryWiseBills();
   }}
 >
-  Print
+  Print 
 </button>
 
         <button
