@@ -118,6 +118,8 @@ import Reports from "./pages/Admin/Reports";
 import ItemWiseReport from "./pages/Admin/ItemWiseReport";
 import BranchReport from "./pages/Admin/BranchReport";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import PrinterMapping from "./pages/PrinterMapping";
+
 
 function App() {
   return (
@@ -148,6 +150,8 @@ function App() {
            <Route path="overall-reports" element={<Reports />} />
            <Route path="itemwise-reports" element={<ItemWiseReport />} />
            <Route path="branch-reports" element={<BranchReport />} />
+           <Route path="cashierdashboard" element={<Dashboard />} />
+           <Route path="printer-details" element={<PrinterMapping />} />
         </Route>
 
       </Routes>

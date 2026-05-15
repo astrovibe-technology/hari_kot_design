@@ -5,6 +5,7 @@ import logo from "../assets/hari.png";
 
 const Login = () => {
   const [form, setForm] = useState({ username: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // ✅ LOGIN FUNCTION INSIDE COMPONENT
@@ -87,15 +88,34 @@ const Login = () => {
             }
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="form-control mb-3"
-            value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-          />
+          <div style={{ position: "relative" }}>
+
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    className="form-control mb-3"
+    value={form.password}
+    onChange={(e) =>
+      setForm({ ...form, password: e.target.value })
+    }
+  />
+
+  {/* 👁 Eye Icon */}
+  <span
+    onClick={() => setShowPassword(!showPassword)}
+    style={{
+      position: "absolute",
+      right: "12px",
+      top: "50%",
+      transform: "translateY(-50%)",
+      cursor: "pointer",
+      fontSize: "18px",
+    }}
+  >
+    {showPassword ? "🙈" : "👁️"}
+  </span>
+
+</div>
 
           <button className="login-btn" onClick={handleLogin}>
             🔐 Sign In

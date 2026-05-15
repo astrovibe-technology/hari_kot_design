@@ -45,15 +45,16 @@ const [showBill, setShowBill] = useState(false);
   }, []);
  const fetchCategories = async () => {
   try {
-    const res = await fetch(`${API}/category/list`, {
-      headers: {
-        role: user.role || "",
-        shop_id: user.shop_id || "",
-      },
-    });
 
+    let url = `${API}/category/list`;
+
+    // ✅ pass as query params
+    if (user.role && user.shop_id) {
+      url += `?role=${user.role}&shop_id=${user.shop_id}`;
+    }
+
+    const res = await fetch(url);
     const data = await res.json();
-    console.log(data.data);
 
     if (data.status) {
       setCategories([
@@ -61,6 +62,7 @@ const [showBill, setShowBill] = useState(false);
         ...data.data,
       ]);
     }
+
   } catch (err) {
     console.log(err);
   }
@@ -68,25 +70,30 @@ const [showBill, setShowBill] = useState(false);
 const fetchProductsByCategory = async (catId) => {
   try {
 
-    // ALL PRODUCTS
+    let url = "";
+
     if (catId === "All") {
-      fetchProducts();
-      return;
+      // ✅ USE SAME API
+      url = `${API}/items/allitems`;
+
+      if (user.role && user.shop_id) {
+        url += `?role=${user.role}&shop_id=${user.shop_id}`;
+      }
+
+    } else {
+      // ✅ category filter API
+      url = `${API}/category/category/${catId}`;
+
+      if (user.role && user.shop_id) {
+        url += `?role=${user.role}&shop_id=${user.shop_id}`;
+      }
     }
 
-    const res = await fetch(
-      `${API}/category/category/${catId}`
-    );
-
+    const res = await fetch(url);
     const data = await res.json();
 
-    console.log("CATEGORY ITEMS:", data);
-
     if (data.status) {
-
-      // DIRECTLY SET API ITEMS
       setProducts(data.data);
-
     }
 
   } catch (err) {
@@ -95,10 +102,11 @@ const fetchProductsByCategory = async (catId) => {
 };
 const fetchProducts = async () => {
   try {
-    let url = `${API}/items/all`;
+    let url = `${API}/items/allitems`;
 
-    if (user.role === "shop_staff" && user.shop_id) {
-      url += `?shop_id=${user.shop_id}`;
+    // ✅ IMPORTANT: pass role + shop_id ALWAYS
+    if (user.role && user.shop_id) {
+      url += `?role=${user.role}&shop_id=${user.shop_id}`;
     }
 
     const res = await fetch(url);
@@ -182,7 +190,7 @@ const subtotal = cart.reduce(
   (sum, item) =>
     sum +
     item.price *
-      (item.unit === "kg" ? item.qty : item.qty / 1000),
+      (item.unit === "kg"|| item.unit === "pc" || item.unit === "litre"? item.qty : item.qty / 1000),
   0
 );
 // CATEGORY WISE PRINT FUNCTION (NO DESIGN CHANGE)
@@ -305,14 +313,14 @@ const subtotal = cart.reduce(
   (sum, item) =>
     sum +
     item.price *
-      (item.unit === "kg" ? item.qty : item.qty / 1000),
+      (item.unit === "kg"|| item.unit === "pc" || item.unit === "litre" ? item.qty : item.qty / 1000),
   0
 );
 
   const gst = items.reduce((sum, item) => {
   const amount =
   item.price *
-  (item.unit === "kg" ? item.qty : item.qty / 1000);
+  (item.unit === "kg" || item.unit === "pc" || item.unit === "litre" ? item.qty : item.qty / 1000);
 
   const gstAmount =
     (amount * item.gst) / (100 + item.gst);
@@ -393,7 +401,11 @@ const subtotal = cart.reduce(
           </div>
 
           <div class="col-total">
-           ₹ ${(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}
+          ₹ ${(item.price * (
+  item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
+    ? item.qty
+    : item.qty / 1000
+)).toFixed(2)}
           </div>
 
         </div>
@@ -459,7 +471,7 @@ const totalGST = cart.reduce(
   (sum, item) => {
    const amount =
   item.price *
-  (item.unit === "kg" ? item.qty : item.qty / 1000);
+  (item.unit === "kg" || item.unit === "pc" || item.unit === "litre" ? item.qty : item.qty / 1000);
 
     const gstAmount =
   (amount * item.gst) / (100 + item.gst);
@@ -498,8 +510,13 @@ const saveBill = async () => {
 
       gst_percent: item.gst,
 
-      total_price:
-  item.price * (item.unit === "kg" ? item.qty : item.qty / 1000) ,
+     total_price:
+  item.price *
+  (
+    item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
+      ? item.qty
+      : item.qty / 1000
+  ),
 
       category_name: item.category,
 
@@ -831,11 +848,23 @@ const filteredProducts = products.filter((p) =>
 >
   <option value="g">g</option>
   <option value="kg">kg</option>
+  <option value="pc">pc</option> 
+  <option value="litre">ltr</option> 
 </select>
 
 </div>
               <div className="item-right">
-                <span>₹ {(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}</span>
+                {/* <span>₹ {(item.price * (item.unit === "kg" ? item.qty : item.qty / 1000)).toFixed(2)}</span> */}
+                <span>
+  ₹ {(
+    item.price *
+    (
+      item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
+        ? item.qty
+        : item.qty / 1000
+    )
+  ).toFixed(2)}
+</span>
                 <FaTrash
                   className="delete"
                   onClick={() => removeItem(item.id)}

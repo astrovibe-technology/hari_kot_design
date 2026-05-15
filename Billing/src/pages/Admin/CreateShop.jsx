@@ -4,7 +4,12 @@ import Swal from "sweetalert2";
 const API = "http://127.0.0.1:8000";
 
 const CreateShop = () => {
-
+  let user = {};
+try {
+  user = JSON.parse(localStorage.getItem("user")) || {};
+} catch {
+  user = {};
+}
   const [shops, setShops] = useState([]);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -88,35 +93,34 @@ const CreateShop = () => {
 
   // ---------------- SAVE ----------------
   const handleSave = async () => {
-    try {
-      let url = `${API}/shops/create-shop`;
-      let method = "POST";
+  try {
+    let url = `${API}/shops/create-shop?login_user_id=${user.id}`;
+    let method = "POST";
 
-      if (editId) {
-        url = `${API}/shops/update/${editId}`;
-        method = "PUT";
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.detail);
-
-      Swal.fire("Success", data.message, "success");
-
-      setShowModal(false);
-      fetchShops();
-
-    } catch (err) {
-      Swal.fire("Error", err.message, "error");
+    if (editId) {
+      url = `${API}/shops/update/${editId}?login_user_id=${user.id}`;
+      method = "PUT";
     }
-  };
 
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.detail);
+
+    Swal.fire("Success", data.message, "success");
+
+    setShowModal(false);
+    fetchShops();
+
+  } catch (err) {
+    Swal.fire("Error", err.message, "error");
+  }
+};
   // ---------------- TOGGLE STATUS ----------------
   const toggleStatus = async (shop) => {
     try {

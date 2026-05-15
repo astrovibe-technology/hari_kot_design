@@ -1,0 +1,27 @@
+.dashboard {
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.stat-card {
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.card {
+  border-radius: 12px;
+}
+
+.card-header {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.table td, .table th {
+  vertical-align: middle;
+}

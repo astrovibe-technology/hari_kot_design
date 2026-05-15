@@ -1,15 +1,29 @@
-// components/Navbar.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import logo from "../assets/hari.png";
-const logout = () => {
-  localStorage.removeItem("isLoggedIn");
- window.location.href = "/";
-};
+
 const Navbar = ({ isOpen }) => {
+
+  const [user, setUser] = useState({});
+
+  useEffect(() => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(storedUser || {});
+    } catch {
+      setUser({});
+    }
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("user");   // ✅ important
+    window.location.href = "/";
+  };
+
   return (
     <div className={`navbar ${isOpen ? "open" : "closed"}`}>
-      
+
       {/* Left */}
       <div className="nav-left">
         <div className="brand">
@@ -25,9 +39,17 @@ const Navbar = ({ isOpen }) => {
       <div className="nav-right">
         <div className="user-box">
           <FaUserCircle className="user-icon" />
+
           <div>
-            <span className="user-name">Nandhini</span>
-            <span className="user-role">Cashier</span>
+            {/* ✅ FULL NAME */}
+            <span className="user-name">
+              {user.full_name || user.username || "User"}
+            </span>
+
+            {/* ✅ ROLE */}
+            <span className="user-role">
+              {user.role || "Role"}
+            </span>
           </div>
         </div>
 
