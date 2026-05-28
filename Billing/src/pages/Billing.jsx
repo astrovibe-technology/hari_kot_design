@@ -58,7 +58,7 @@ const [showBill, setShowBill] = useState(false);
 
     if (data.status) {
       setCategories([
-        { id: "All", category_name: "All" },
+        // { id: "All", category_name: "All" },
         ...data.data,
       ]);
     }
@@ -194,13 +194,55 @@ const subtotal = cart.reduce(
   0
 );
 // CATEGORY WISE PRINT FUNCTION (NO DESIGN CHANGE)
-const printCategoryWiseBills = (billNumber) => {
+// const printCategoryWiseBills = async (billNumber) => {
+//   if (cart.length === 0) return;
+
+//   const grouped = {};
+
+//   cart.forEach((item) => {
+//     const category = item.category || "Others";
+
+//     if (!grouped[category]) {
+//       grouped[category] = [];
+//     }
+
+//     grouped[category].push(item);
+//   });
+
+//   for (const category of Object.keys(grouped)) {
+
+//     await fetch("http://localhost:8001/print", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         bill_no: billNumber,
+//         category: category,
+//         items: grouped[category],
+//         customer_name: customer.name || "Walk-in",
+//         payment_mode: paymentMode,
+//         order_type: orderType
+//       }),
+//     });
+
+//     await new Promise((res) => setTimeout(res, 300));
+//   }
+// };
+// ===============================================
+// CATEGORY WISE CUSTOMER BILL + KOT PRINT
+// ===============================================
+const printCategoryWiseBills = async (billNumber) => {
+
   if (cart.length === 0) return;
 
-  // ✅ GROUP ITEMS CATEGORY WISE
+  // ==========================================
+  // GROUP CATEGORY WISE
+  // ==========================================
   const grouped = {};
 
   cart.forEach((item) => {
+
     const category = item.category || "Others";
 
     if (!grouped[category]) {
@@ -208,264 +250,120 @@ const printCategoryWiseBills = (billNumber) => {
     }
 
     grouped[category].push(item);
+
   });
 
-  // ✅ OPEN PRINT WINDOW
-const printWindow = window.open("", "", "width=350,height=600");
+  // ==========================================
+  // LOOP CATEGORY
+  // ==========================================
+  for (const category of Object.keys(grouped)) {
 
-if (!printWindow) {
-  alert("Please allow popups for printing");
-  return;
-}
+    const categoryItems = grouped[category];
 
-let html = `
-<html>
-<head>
-  <title>Print</title>
+    // ==========================================
+    // CUSTOMER BILL PRINT
+    // ==========================================
+    try {
 
-  <style>
+      await fetch("http://localhost:8001/print", {
 
-    @page{
-      size: 80mm auto;
-      margin: 0;
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+
+          bill_no: billNumber,
+
+          category: category,
+
+          customer_name:
+            customer.name || "Walk-in",
+            customer_phone:
+    customer.phone || "",
+
+          payment_mode: paymentMode,
+
+          order_type: orderType,
+
+          items: categoryItems.map((item) => ({
+
+            name:
+              item.item_name || item.name,
+
+            qty: item.qty,
+
+            unit: item.unit,
+
+            price: item.price,
+
+            gst: item.gst
+
+          }))
+        }),
+      });
+
+    } catch (err) {
+
+      console.log(
+        "CUSTOMER BILL PRINT ERROR:",
+        err
+      );
     }
 
-    body{
-      font-family: monospace;
-      width: 72mm;
-      margin: 0 auto;
-      padding: 2mm;
-      font-size: 12px;
-      color:#000;
+    // ==========================================
+    // KOT PRINT
+    // ==========================================
+    try {
+
+      await fetch("http://localhost:8001/print-kot", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+
+          inv_number: billNumber,
+
+          category_name: category,
+
+          items: categoryItems.map((item) => ({
+
+            item_name:
+              item.item_name || item.name,
+
+            quantity: item.qty,
+
+            unit: item.unit
+
+          }))
+        }),
+      });
+
+      console.log(
+        `KOT SENT -> ${category}`
+      );
+
+    } catch (err) {
+
+      console.log(
+        "KOT PRINT ERROR:",
+        err
+      );
     }
 
-    .bill{
-      padding-bottom: 5mm;
-    }
-
-    .center{
-      text-align:center;
-    }
-
-    .row{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      margin:3px 0;
-      font-size:12px;
-    }
-
-    .table-header,
-    .table-row{
-      display:flex;
-      justify-content:space-between;
-      font-size:12px;
-      margin:2px 0;
-    }
-
-    .col-item{
-      width:40%;
-      text-align:left;
-      word-break:break-word;
-    }
-
-    .col-qty{
-      width:15%;
-      text-align:center;
-    }
-
-    .col-price{
-      width:20%;
-      text-align:right;
-    }
-
-    .col-total{
-      width:25%;
-      text-align:right;
-    }
-
-    .total-row{
-      font-size:14px;
-      font-weight:bold;
-    }
-
-    hr{
-      border:none;
-      border-top:1px dashed #000;
-      margin:5px 0;
-    }
-
-    h2,h3,p{
-      margin:2px 0;
-    }
-
-  </style>
-</head>
-
-<body>
-`;
-
-// ✅ CATEGORY WISE
-Object.keys(grouped).forEach((category) => {
-
-  const items = grouped[category];
-const subtotal = cart.reduce(
-  (sum, item) =>
-    sum +
-    item.price *
-      (item.unit === "kg"|| item.unit === "pc" || item.unit === "litre" ? item.qty : item.qty / 1000),
-  0
-);
-
-  const gst = items.reduce((sum, item) => {
-  const amount =
-  item.price *
-  (item.unit === "kg" || item.unit === "pc" || item.unit === "litre" ? item.qty : item.qty / 1000);
-
-  const gstAmount =
-    (amount * item.gst) / (100 + item.gst);
-
-  return sum + gstAmount;
-}, 0);
-
-  const total = subtotal + gst;
-
-  const now = new Date();
-
-  const date = now.toLocaleDateString();
-
-  const time = now.toLocaleTimeString();
-
-  html += `
-
-    <div class="bill">
-
-      <!-- SHOP DETAILS -->
-      <div class="center">
-        <h2>Hari Groups</h2>
-        <p>ABC Street, Alangulam</p>
-        <p>Mobile No : 9876543210</p>
-      </div>
-
-      <hr>
-
-      <!-- BILL DETAILS -->
-      <div class="row">
-        <span>Invoice : ${billNumber}</span>
-        <span>${customer.name || "Walk-in"}</span>
-      </div>
-
-      <div class="row">
-        <span>Date : ${date}</span>
-        <span>Time : ${time}</span>
-      </div>
-
-      <div class="row">
-        <span>Payment : ${paymentMode}</span>
-        <span>Order : ${orderType}</span>
-      </div>
-
-      <hr>
-
-      <!-- CATEGORY -->
-      <div class="center">
-        <h3>${category.toUpperCase()}</h3>
-      </div>
-
-      <hr>
-
-      <!-- TABLE HEADER -->
-      <div class="table-header">
-        <div class="col-item"><b>Item</b></div>
-        <div class="col-qty"><b>Qty</b></div>
-        <div class="col-price"><b>Price</b></div>
-        <div class="col-total"><b>Total</b></div>
-      </div>
-
-      <hr>
-
-      <!-- ITEMS -->
-      ${items.map((item) => `
-        <div class="table-row">
-
-          <div class="col-item">
-            ${item.name}
-          </div>
-
-          <div class="col-qty">
-            ${item.qty} ${item.unit}
-          </div>
-  
-          <div class="col-price">
-            ₹ ${item.price.toFixed(2)}
-          </div>
-
-          <div class="col-total">
-          ₹ ${(item.price * (
-  item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
-    ? item.qty
-    : item.qty / 1000
-)).toFixed(2)}
-          </div>
-
-        </div>
-      `).join("")}
-
-      <hr>
-
-      <!-- TOTALS -->
-      <div class="row">
-        <span>Subtotal</span>
-        <span>₹ ${subtotal.toFixed(2)}</span>
-      </div>
-
-      <div class="row">
-        <span>GST</span>
-        <span>₹ ${gst.toFixed(2)}</span>
-      </div>
-
-      <hr>
-
-      <div class="row total-row">
-        <span>Total</span>
-        <span>₹ ${subtotal.toFixed(2)}</span>
-      </div>
-
-      <hr>
-
-      <div class="center">
-        <p>Thank You Visit Again</p>
-      </div>
-
-    </div>
-  `;
-});
-
-html += `
-</body>
-</html>
-`;
- printWindow.document.open();
-printWindow.document.write(html);
-printWindow.document.close();
-
-printWindow.onload = () => {
-
-  printWindow.focus();
-
-  printWindow.print();
-
-  // ✅ CLOSE AFTER PRINT
-  printWindow.onafterprint = () => {
-    printWindow.close();
-  };
-
-  // ✅ EXTRA SAFETY CLOSE
-  setTimeout(() => {
-    printWindow.close();
-  }, 200);
-
-};
+    // ==========================================
+    // SMALL DELAY
+    // ==========================================
+    await new Promise((res) =>
+      setTimeout(res, 100)
+    );
+  }
 };
 const totalGST = cart.reduce(
   (sum, item) => {
@@ -499,31 +397,64 @@ const saveBill = async () => {
     ];
 
     // ✅ ITEMS PAYLOAD
-    const payloadItems = cart.map((item) => ({
+  //   const payloadItems = cart.map((item) => ({
 
-      item_id: item.id,
+  //     item_id: item.id,
 
-      quantity: item.qty,
-      unit: item.unit, 
+  //     quantity: item.qty,
+  //     unit: item.unit, 
 
-      item_price: item.price,
+  //     item_price: item.price,
 
-      gst_percent: item.gst,
+  //     gst_percent: item.gst,
 
-     total_price:
-  item.price *
-  (
-    item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
-      ? item.qty
-      : item.qty / 1000
-  ),
+  //    total_price:
+  // item.price *
+  // (
+  //   item.unit === "kg" || item.unit === "pc" || item.unit === "litre"
+  //     ? item.qty
+  //     : item.qty / 1000
+  // ),
 
-      category_name: item.category,
+  //     category_name: item.category,
 
-      // ✅ IMPORTANT
-      shop_id: Number(item.shop_id),
+  //     // ✅ IMPORTANT
+  //     shop_id: Number(item.shop_id),
 
-    }));
+  //   }));
+  const payloadItems = cart.map((item) => ({
+
+  item_id: item.id,
+
+  // ✅ KOT REQUIRED
+  item_name: item.item_name || item.name,
+
+  category_id: item.category_id,
+
+  category_name: item.category,
+
+  quantity: item.qty,
+
+  unit: item.unit,
+
+  item_price: item.price,
+
+  gst_percent: item.gst,
+
+  total_price:
+    item.price *
+    (
+      item.unit === "kg" ||
+      item.unit === "pc" ||
+      item.unit === "litre"
+        ? item.qty
+        : item.qty / 1000
+    ),
+
+  // ✅ SHOP
+  shop_id: Number(item.shop_id),
+
+}));
 
     // ✅ FINAL PAYLOAD
     const payload = {
@@ -574,13 +505,42 @@ const saveBill = async () => {
 
     printCategoryWiseBills(currentBillNo);
 
-    alert("Bill Created Successfully");
+    // ✅ AUTO SUCCESS MESSAGE
+const successDiv = document.createElement("div");
 
-    setCart([]);
+successDiv.innerText = "Bill Created Successfully";
 
-    setShowBill(false);
+successDiv.style.position = "fixed";
+successDiv.style.top = "20px";
+successDiv.style.right = "20px";
+successDiv.style.background = "green";
+successDiv.style.color = "white";
+successDiv.style.padding = "12px 20px";
+successDiv.style.borderRadius = "8px";
+successDiv.style.zIndex = "9999";
+successDiv.style.fontWeight = "bold";
 
-    fetchBillNumber();
+document.body.appendChild(successDiv);
+
+// ✅ AUTO REMOVE AFTER 2 SECONDS
+setTimeout(() => {
+  successDiv.remove();
+}, 2000);
+
+// ✅ CLEAR DATA
+setCart([]);
+
+setShowBill(false);
+
+// ✅ CLEAR CUSTOMER
+setCustomer({
+  name: "",
+  phone: "",
+  discount: "",
+});
+
+// ✅ NEW BILL NUMBER
+fetchBillNumber();
 
   } catch (err) {
 
@@ -638,10 +598,29 @@ const filteredProducts = products.filter((p) =>
               key={p.id}
               className="product-card"
              onClick={() =>
- addToCart({
+//  addToCart({
+//   id: p.id,
+//   name: p.item_name,
+//   price: p.price,
+//   gst: p.gst_percent,
+
+//   category:
+//     p.category_name ||
+//     categories.find(c => c.id === activeCat)?.category_name ||
+//     "Others",
+
+//   // ✅ ADD THIS
+//   shop_id: p.shop_id,
+
+//   shop_ids: p.shop_ids || [p.shop_id]
+// })
+addToCart({
   id: p.id,
+
   name: p.item_name,
+
   price: p.price,
+
   gst: p.gst_percent,
 
   category:
@@ -649,7 +628,12 @@ const filteredProducts = products.filter((p) =>
     categories.find(c => c.id === activeCat)?.category_name ||
     "Others",
 
-  // ✅ ADD THIS
+  // ✅ IMPORTANT FOR KOT
+  category_id: p.category_id,
+
+  item_name: p.item_name,
+
+  // ✅ SHOP
   shop_id: p.shop_id,
 
   shop_ids: p.shop_ids || [p.shop_id]

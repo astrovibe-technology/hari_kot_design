@@ -162,9 +162,8 @@ const CategoryPage = () => {
               categories.map((c) => (
                 <tr key={c.id}>
                   <td>{c.category_name}</td>
-                  <td>{c.shop?.shop_name || "-"}</td>
-                  <td>{c.gst?.gst_name} ({c.gst?.gst_percent}%)</td>
-
+                  <td>{shopList.find(s => s.id === c.shop_id)?.shop_name || "-"}</td>
+                  <td>{c.gst_percent}%</td>
                   <td>
                     <button
                       className="btn btn-sm btn-warning me-2"
