@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const GstPage = () => {
   const [gstList, setGstList] = useState([]);
+  const [search, setSearch] = useState(""); // ✅ ADDED SEARCH
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -117,77 +118,106 @@ const GstPage = () => {
     fetchGST();
   };
 
+  // ================= FILTER =================
+  const filteredGST = gstList.filter((g) =>
+    (g.gst_name || "").toLowerCase().includes(search.toLowerCase()) ||
+    (g.gst_percent || "").toString().includes(search)
+  );
+
   return (
     <div className="printer-page">
 
-      {/* HEADER */}
-      <div className="header">
-        <h2>GST Details</h2>
-        <button className="add-btn" onClick={openCreate}>
-          + Add GST
-        </button>
+      {/* HEADER WITH SEARCH + BUTTON */}
+      <div className="header d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+        <h3 className="mb-0">🧾 GST Management</h3>
+
+        <div className="d-flex align-items-center gap-2">
+
+          <input
+            type="text"
+            className="form-control"
+            placeholder="🔍 Search GST name / percent..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "300px",
+              borderRadius: "8px"
+            }}
+          />
+
+          <button className="add-btn" onClick={openCreate}>
+            + Add GST
+          </button>
+
+        </div>
+
       </div>
 
       {/* TABLE */}
-      <div className="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Percent</th>
-              <th>Status</th>
-              <th>Action</th>
+     <div className="table-box">
+  <div className="table-responsive">
+    <table className="table table-hover mb-0">
+
+      <thead className="table-primary">
+        <tr>
+          <th>Name</th>
+          <th>Percent</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {filteredGST.length === 0 ? (
+          <tr>
+            <td colSpan="4" className="text-center">
+              No GST Found
+            </td>
+          </tr>
+        ) : (
+          filteredGST.map((g) => (
+            <tr key={g.id}>
+              <td>{g.gst_name}</td>
+              <td>{g.gst_percent}%</td>
+
+              {/* STATUS */}
+              <td>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={g.is_active ?? true}
+                    onChange={() => toggleStatus(g)}
+                  />
+                  <span className="slider"></span>
+                </label>
+              </td>
+
+              {/* ACTION */}
+              <td className="text-nowrap">
+                <button
+                  className="btn btn-sm btn-warning me-2"
+                  onClick={() => handleEdit(g)}
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => handleDelete(g.id)}
+                >
+                  Delete
+                </button>
+              </td>
+
             </tr>
-          </thead>
+          ))
+        )}
+      </tbody>
 
-          <tbody>
-            {gstList.length === 0 ? (
-              <tr>
-                <td colSpan="4" className="empty">
-                  No GST found
-                </td>
-              </tr>
-            ) : (
-              gstList.map((g) => (
-                <tr key={g.id}>
-                  <td>{g.gst_name}</td>
-                  <td>{g.gst_percent}%</td>
-
-                  {/* STATUS */}
-                  <td>
-                    <label className="switch">
-                      <input
-                        type="checkbox"
-                        checked={g.is_active ?? true}
-                        onChange={() => toggleStatus(g)}
-                      />
-                      <span className="slider"></span>
-                    </label>
-                  </td>
-
-                  {/* ACTION */}
-                  <td>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => handleEdit(g)}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(g.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    </table>
+  </div>
+</div>
 
       {/* MODAL */}
       {showModal && (

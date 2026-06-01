@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const CreateShop = () => {
   let user = {};
@@ -141,93 +141,117 @@ try {
 
   return (
     <div className="container mt-3">
-
+      
       {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3>🏪 Shop Management</h3>
-        <button className="btn btn-primary" onClick={openCreate}>
-          + Create Shop
-        </button>
-      </div>
+    {/* HEADER */}
+<div className="header d-flex justify-content-between align-items-center flex-wrap gap-2">
 
-      {/* SEARCH BAR */}
-      <div className="mb-3">
+  <h3 className="mb-0">🏪 Shop Management</h3>
+
+  <div className="d-flex align-items-center gap-2">
+
+    <input
+      type="text"
+      className="form-control"
+      placeholder="🔍 Search shop or phone..."
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      style={{
+        width: "300px",
+        borderRadius: "8px"
+      }}
+    />
+
+    <button className="add-btn" onClick={openCreate}>
+      + Create Shop
+    </button>
+
+  </div>
+
+</div>
+
+     
+      {/* <div className="mb-3">
         <input
           className="form-control"
           placeholder="🔍 Search shop or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </div>
+      </div> */}
 
-      {/* TABLE */}
-      <div className="table-box">
-        <table className="">
-          <thead className="">
-            <tr>
-              <th>Shop</th>
-              <th>Phone</th>
-              <th>GST</th>
-              <th>Staff</th>
-              <th>Status</th>
-              <th>Action</th>
+{/* SEARCH + TABLE WRAPPER */}
+<div className="table-box">
+
+
+  {/* RESPONSIVE TABLE */}
+  <div className="table-responsive">
+    <table className="table table-hover mb-0">
+
+      <thead className="table-primary">
+        <tr>
+          <th>Shop</th>
+          <th>Phone</th>
+          <th>GST</th>
+          <th>Staff</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {filteredShops.length === 0 ? (
+          <tr>
+            <td colSpan="6" className="text-center">
+              No shops found
+            </td>
+          </tr>
+        ) : (
+          filteredShops.map((s) => (
+            <tr key={s.id}>
+              <td>{s.shop_name}</td>
+              <td>{s.phone}</td>
+              <td>{s.gst_number}</td>
+
+              <td>
+                <div>{s.staff_username}</div>
+                <small>{s.staff_email}</small>
+              </td>
+
+              <td>
+                <div className="form-check form-switch">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={s.is_active ?? true}
+                    onChange={() => toggleStatus(s)}
+                  />
+                </div>
+              </td>
+
+              <td className="text-nowrap">
+                <button
+                  className="btn btn-warning btn-sm me-2"
+                  onClick={() => handleEdit(s)}
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(s.id)}
+                >
+                  Delete
+                </button>
+              </td>
             </tr>
-          </thead>
+          ))
+        )}
+      </tbody>
 
-          <tbody>
-            {filteredShops.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="text-center">
-                  No shops found
-                </td>
-              </tr>
-            ) : (
-              filteredShops.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.shop_name}</td>
-                  <td>{s.phone}</td>
-                  <td>{s.gst_number}</td>
-
-                  <td>
-                    <div>{s.staff_username}</div>
-                    <small>{s.staff_email}</small>
-                  </td>
-
-                  {/* STATUS */}
-                  <td>
-                    <div className="form-check form-switch">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={s.is_active ?? true}
-                        onChange={() => toggleStatus(s)}
-                      />
-                    </div>
-                  </td>
-
-                  {/* ACTION */}
-                  <td>
-                    <button
-                      className="btn btn-warning btn-sm me-2"
-                      onClick={() => handleEdit(s)}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(s.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+    </table>
+  </div>
+</div>
 
       {/* MODAL */}
       {showModal && (

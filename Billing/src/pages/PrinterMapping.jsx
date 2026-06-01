@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const PrinterMapping = () => {
 
@@ -15,6 +15,8 @@ const PrinterMapping = () => {
   const [categories, setCategories] = useState([]);
   const [printers, setPrinters] = useState([]);
   const [showModal, setShowModal] = useState(false);
+
+  const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
     printer_name: "",
@@ -78,6 +80,22 @@ const PrinterMapping = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // ---------------- SEARCH FILTER ----------------
+  const filteredPrinters = printers.filter((p) => {
+    const keyword = search.toLowerCase();
+
+    return (
+      p.printer_name?.toLowerCase().includes(keyword) ||
+      p.printer_type?.toLowerCase().includes(keyword) ||
+      p.ip_address?.toLowerCase().includes(keyword) ||
+      String(p.port)?.toLowerCase().includes(keyword) ||
+      categories
+        .find((c) => c.id === p.category_id)
+        ?.category_name?.toLowerCase()
+        .includes(keyword)
+    );
+  });
+
   // ---------------- ADD / UPDATE ----------------
   const handleSave = async () => {
     try {
@@ -92,7 +110,6 @@ const PrinterMapping = () => {
         return Swal.fire({
           icon: "warning",
           title: "Missing Fields",
-          text: "Please fill all fields",
         });
       }
 
@@ -111,28 +128,16 @@ const PrinterMapping = () => {
       }
 
       const res = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        method,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.detail || "Error");
-      }
+      if (!res.ok) throw new Error(data.detail);
 
-      Swal.fire({
-        icon: "success",
-        title: editId ? "Updated!" : "Created!",
-        text: editId
-          ? "Printer updated successfully"
-          : "Printer created successfully",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      Swal.fire("Success", editId ? "Updated" : "Created", "success");
 
       setShowModal(false);
       setEditId(null);
@@ -148,11 +153,7 @@ const PrinterMapping = () => {
       fetchPrinters();
 
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.message,
-      });
+      Swal.fire("Error", err.message, "error");
     }
   };
 
@@ -172,159 +173,135 @@ const PrinterMapping = () => {
 
   // ---------------- DELETE ----------------
   const handleDelete = async (id) => {
-
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "You won't be able to revert this!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
     });
 
     if (!result.isConfirmed) return;
 
-    try {
-      const res = await fetch(`${API}/printers/delete/${id}`, {
-        method: "DELETE",
-      });
+    await fetch(`${API}/printers/delete/${id}`, { method: "DELETE" });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Delete failed");
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Deleted!",
-        text: "Printer deleted successfully",
-        timer: 1200,
-        showConfirmButton: false,
-      });
-
-      fetchPrinters();
-
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: err.message,
-      });
-    }
+    Swal.fire("Deleted!", "", "success");
+    fetchPrinters();
   };
 
   // ---------------- TOGGLE STATUS ----------------
   const toggleStatus = async (p) => {
-    try {
+    await fetch(`${API}/printers/update/${p.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...p, is_active: !p.is_active }),
+    });
 
-      const res = await fetch(`${API}/printers/update/${p.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...p,
-          is_active: !p.is_active,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed");
-      }
-
-      fetchPrinters();
-
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed",
-        text: err.message,
-      });
-    }
+    fetchPrinters();
   };
 
-  // ---------------- HELPER ----------------
-  const getCategoryName = (id) => {
-    return (
-      categories.find((c) => c.id === id)?.category_name || "-"
-    );
-  };
+  // ---------------- CATEGORY NAME ----------------
+  const getCategoryName = (id) =>
+    categories.find((c) => c.id === id)?.category_name || "-";
 
   return (
     <div className="printer-page">
 
-      <div className="header">
-        <h2>🖨️ Printer Management</h2>
-        <button className="add-btn" onClick={() => setShowModal(true)}>
-          + Add Printer
-        </button>
+      {/* HEADER (RESPONSIVE) */}
+      <div className="header d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+        <h3 className="mb-0">🖨️ Printer Management</h3>
+
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+
+          {/* SEARCH */}
+          <input
+            type="text"
+            className="form-control"
+            placeholder="🔍 Search printer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "260px",
+              borderRadius: "8px"
+            }}
+          />
+
+          {/* ADD BUTTON */}
+          <button
+            className="add-btn"
+            onClick={() => setShowModal(true)}
+          >
+            + Add Printer
+          </button>
+
+        </div>
       </div>
 
+      {/* TABLE */}
       <div className="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-              <th>IP</th>
-              <th>Port</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+        <div className="table-responsive">
+          <table className="table table-hover mb-0">
 
-          <tbody>
-            {printers.length === 0 ? (
+            <thead className="table-primary">
               <tr>
-                <td colSpan="7" className="empty">
-                  No printers added
-                </td>
+                <th>Name</th>
+                <th>Type</th>
+                <th>IP</th>
+                <th>Port</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            ) : (
-              printers.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.printer_name}</td>
+            </thead>
 
-                  <td>
-                    <span className={`tag ${p.printer_type}`}>
-                      {p.printer_type}
-                    </span>
+            <tbody>
+              {filteredPrinters.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="text-center">
+                    No printers found
                   </td>
+                </tr>
+              ) : (
+                filteredPrinters.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.printer_name}</td>
+                    <td>{p.printer_type}</td>
+                    <td>{p.ip_address}</td>
+                    <td>{p.port}</td>
+                    <td>{getCategoryName(p.category_id)}</td>
 
-                  <td>{p.ip_address}</td>
-                  <td>{p.port}</td>
-
-                  <td>{getCategoryName(p.category_id)}</td>
-
-                  <td>
-                    <label className="switch">
+                    <td>
                       <input
                         type="checkbox"
                         checked={p.is_active}
                         onChange={() => toggleStatus(p)}
                       />
-                      <span className="slider"></span>
-                    </label>
-                  </td>
+                    </td>
 
-                  <td>
-                    <button onClick={() => handleEdit(p)} className="btn btn-primary">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(p.id)} className="btn btn-danger">
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    <td className="text-nowrap">
+                      <button
+                        className="btn btn-sm btn-warning me-2"
+                        onClick={() => handleEdit(p)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+
+          </table>
+        </div>
       </div>
 
+      {/* MODAL */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-box">
@@ -387,6 +364,7 @@ const PrinterMapping = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

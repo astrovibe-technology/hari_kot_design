@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const CategoryPage = () => {
 
   const [categories, setCategories] = useState([]);
   const [gstList, setGstList] = useState([]);
   const [shopList, setShopList] = useState([]);
+
+  const [search, setSearch] = useState(""); // ✅ ADDED SEARCH STATE
 
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -130,60 +132,97 @@ const CategoryPage = () => {
     }
   };
 
+  // ---------------- FILTER ----------------
+  const filteredCategories = categories.filter((c) =>
+    (c.category_name || "")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
   return (
     <div className="printer-page">
 
-      {/* HEADER */}
-      <div className="header">
-        <h2>📦 Category Management</h2>
-        <button className="add-btn" onClick={openCreate}>
-          + Add Category
-        </button>
+      {/* HEADER (SEARCH + BUTTON SIDE BY SIDE) */}
+      <div className="header d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+        <h3 className="mb-0">📦 Category Management</h3>
+
+        <div className="d-flex align-items-center gap-2">
+
+          <input
+            type="text"
+            className="form-control"
+            placeholder="🔍 Search category..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "300px",
+              borderRadius: "8px"
+            }}
+          />
+
+          <button className="add-btn" onClick={openCreate}>
+            + Add Category
+          </button>
+
+        </div>
+
       </div>
 
       {/* TABLE */}
       <div className="table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Shop</th>
-              <th>GST</th>
-              <th>Action</th>
-            </tr>
-          </thead>
+        <div className="table-responsive">
+          <table className="table table-hover mb-0">
 
-          <tbody>
-            {categories.length === 0 ? (
+            <thead className="table-primary">
               <tr>
-                <td colSpan="4">No Categories Found</td>
+                <th>Category</th>
+                <th>Shop</th>
+                <th>GST</th>
+                <th>Action</th>
               </tr>
-            ) : (
-              categories.map((c) => (
-                <tr key={c.id}>
-                  <td>{c.category_name}</td>
-                  <td>{shopList.find(s => s.id === c.shop_id)?.shop_name || "-"}</td>
-                  <td>{c.gst_percent}%</td>
-                  <td>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => handleEdit(c)}
-                    >
-                      Edit
-                    </button>
+            </thead>
 
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(c.id)}
-                    >
-                      Delete
-                    </button>
+            <tbody>
+              {filteredCategories.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center">
+                    No Categories Found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredCategories.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.category_name}</td>
+
+                    <td>
+                      {shopList.find((s) => s.id === c.shop_id)?.shop_name || "-"}
+                    </td>
+
+                    <td>{c.gst_percent}%</td>
+
+                    <td className="text-nowrap">
+                      <button
+                        className="btn btn-sm btn-warning me-2"
+                        onClick={() => handleEdit(c)}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+
+          </table>
+        </div>
       </div>
 
       {/* MODAL */}
@@ -200,7 +239,6 @@ const CategoryPage = () => {
               onChange={handleChange}
             />
 
-            {/* SHOP */}
             <select
               name="shop_id"
               value={form.shop_id}
@@ -214,7 +252,6 @@ const CategoryPage = () => {
               ))}
             </select>
 
-            {/* GST */}
             <select
               name="gst_id"
               value={form.gst_id}

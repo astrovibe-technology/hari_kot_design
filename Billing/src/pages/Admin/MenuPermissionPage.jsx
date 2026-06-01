@@ -191,7 +191,7 @@
 import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const MenuPermissionPage = () => {
   const [menus, setMenus] = useState([]);

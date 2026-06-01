@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 
-const API = "http://127.0.0.1:8000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 const COLORS = ["#4facfe", "#00c6ff", "#43e97b", "#fa709a"];
 
@@ -40,109 +40,155 @@ function Dashboard() {
   const { summary, top_items, branches, payments } = data;
 
   return (
-    <div className="container-fluid py-3 px-2" style={{ background: "#f4f6fb", minHeight: "100vh" }}>
+    <div
+      className="container-fluid py-2 px-2"
+      style={{
+        background: "#f4f6fb",
+        minHeight: "100vh",
+        overflowX: "hidden"
+      }}
+    >
 
-      {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-        <h5 className="fw-bold mb-2">
-          {user.role === "Cashier" ? "🏢 All Shops Dashboard" : "🏬 My Shop Dashboard"}
-        </h5>
+      {/* HEADER (compact) */}
+      <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap">
+        <h6 className="fw-bold mb-0">
+          {user.role === "Cashier"
+            ? "🏢 All Shops Dashboard"
+            : "🏬 My Shop Dashboard"}
+        </h6>
+
         <span className="badge bg-dark">
           {new Date().toLocaleString()}
         </span>
       </div>
 
-      {/* SUMMARY */}
-      <div className="row g-3">
+      {/* SUMMARY (compact cards) */}
+      <div className="row g-2">
 
         <div className="col-lg-4 col-md-6">
-          <div className="p-3 rounded text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg,#4facfe,#00c6ff)" }}>
-            <h6 className="mb-1">Total Sales</h6>
-            <h4>₹ {summary.total_sales}</h4>
+          <div
+            className="p-2 rounded text-white shadow-sm"
+            style={{
+              background: "linear-gradient(135deg,#4facfe,#00c6ff)",
+              minHeight: "65px"
+            }}
+          >
+            <h6 className="mb-0">Total Sales</h6>
+            <h5 className="mb-0">₹ {summary.total_sales}</h5>
           </div>
         </div>
 
         <div className="col-lg-4 col-md-6">
-          <div className="p-3 rounded text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg,#f7971e,#ffd200)" }}>
-            <h6 className="mb-1">Total GST</h6>
-            <h4>₹ {summary.total_gst}</h4>
+          <div
+            className="p-2 rounded text-white shadow-sm"
+            style={{
+              background: "linear-gradient(135deg,#f7971e,#ffd200)",
+              minHeight: "65px"
+            }}
+          >
+            <h6 className="mb-0">Total GST</h6>
+            <h5 className="mb-0">₹ {summary.total_gst}</h5>
           </div>
         </div>
 
         <div className="col-lg-4 col-md-12">
-          <div className="p-3 rounded text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg,#8e2de2,#4a00e0)" }}>
-            <h6 className="mb-1">Total Bills</h6>
-            <h4>{summary.total_bills}</h4>
+          <div
+            className="p-2 rounded text-white shadow-sm"
+            style={{
+              background: "linear-gradient(135deg,#8e2de2,#4a00e0)",
+              minHeight: "65px"
+            }}
+          >
+            <h6 className="mb-0">Total Bills</h6>
+            <h5 className="mb-0">{summary.total_bills}</h5>
           </div>
         </div>
 
       </div>
 
-      {/* CHARTS */}
-      <div className="row mt-3 g-3">
+      {/* CHARTS (compact height) */}
+      <div className="row mt-2 g-2">
 
-        <div className="col-lg-6">
-          <div className="card shadow-sm border-0 p-2">
-            <h6 className="mb-2">🔥 Top Items</h6>
+        <div className="col-lg-6 col-12">
+          <div className="card shadow-sm border-0 p-1">
+            <h6 className="mb-1">🔥 Top Items</h6>
 
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={top_items}>
-                <XAxis dataKey="item_name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="sales" fill="#4facfe" radius={[6,6,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: 160 }}>
+              <ResponsiveContainer>
+                <BarChart data={top_items}>
+                  <XAxis dataKey="item_name" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <Tooltip />
+                  <Bar dataKey="sales" fill="#4facfe" radius={[5, 5, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
           </div>
         </div>
 
-        <div className="col-lg-6">
-          <div className="card shadow-sm border-0 p-2">
-            <h6 className="mb-2">💳 Payments</h6>
+        <div className="col-lg-6 col-12">
+          <div className="card shadow-sm border-0 p-1">
+            <h6 className="mb-1">💳 Payments</h6>
 
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={payments}
-                  dataKey="amount"
-                  nameKey="mode"
-                  outerRadius={75}
-                >
-                  {payments.map((entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{ width: "100%", height: 160 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={payments}
+                    dataKey="amount"
+                    nameKey="mode"
+                    outerRadius={60}
+                  >
+                    {payments.map((entry, index) => (
+                      <Cell
+                        key={index}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
           </div>
         </div>
 
       </div>
 
-      {/* CASHIER VIEW */}
+      {/* CASHIER TABLE */}
       {user.role === "Cashier" && (
-        <div className="card mt-3 shadow-sm border-0">
-          <div className="card-header bg-dark text-white py-2">
+        <div className="card mt-2 shadow-sm border-0">
+
+          <div className="card-header bg-dark text-white py-1">
             Branch Sales
           </div>
 
-          <div className="table-responsive">
-            <table className="table table-sm mb-0">
-              <thead className="table-light">
+          {/* SCROLL FIX */}
+          <div
+            style={{
+              maxHeight: "600px",
+              overflowY: "auto",
+              overflowX: "auto"
+            }}
+          >
+
+            <table className="table table-hover table-sm mb-0">
+
+              <thead className="table-primary">
                 <tr>
                   <th>Shop</th>
                   <th className="text-end">Sales</th>
                 </tr>
               </thead>
+
               <tbody>
-                {branches.length === 0 ? (
+                {branches?.length === 0 ? (
                   <tr>
-                    <td colSpan="2" className="text-center">No Data</td>
+                    <td colSpan="2" className="text-center">
+                      No Data
+                    </td>
                   </tr>
                 ) : (
                   branches.map((b, i) => (
@@ -155,27 +201,33 @@ function Dashboard() {
                   ))
                 )}
               </tbody>
+
             </table>
+
           </div>
         </div>
       )}
 
       {/* SHOP STAFF */}
       {user.role === "shop_staff" && (
-        <div className="row mt-3 g-3">
+        <div className="row mt-2 g-2">
+
           <div className="col-md-6">
-            <div className="card p-3 text-center shadow-sm">
-              <h6>My Sales</h6>
-              <h4 className="text-success">₹ {summary.total_sales}</h4>
+            <div className="card p-2 text-center shadow-sm">
+              <h6 className="mb-1">My Sales</h6>
+              <h5 className="text-success mb-0">
+                ₹ {summary.total_sales}
+              </h5>
             </div>
           </div>
 
           <div className="col-md-6">
-            <div className="card p-3 text-center shadow-sm">
-              <h6>My Bills</h6>
-              <h4>{summary.total_bills}</h4>
+            <div className="card p-2 text-center shadow-sm">
+              <h6 className="mb-1">My Bills</h6>
+              <h5 className="mb-0">{summary.total_bills}</h5>
             </div>
           </div>
+
         </div>
       )}
 

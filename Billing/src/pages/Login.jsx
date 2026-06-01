@@ -3,15 +3,17 @@ import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import logo from "../assets/hari.png";
 
+const API = import.meta.env.VITE_API_BASE_URL;
+
 const Login = () => {
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  // ✅ LOGIN FUNCTION INSIDE COMPONENT
+  // LOGIN FUNCTION
   const handleLogin = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/users/login", {
+      const res = await fetch(`${API}/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,7 +30,7 @@ const Login = () => {
         throw new Error(data.detail || "Login failed");
       }
 
-      // ✅ STORE DATA
+      // STORE DATA
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("menus", JSON.stringify(data.menus));
@@ -41,17 +43,14 @@ const Login = () => {
       });
 
       setTimeout(() => {
-  // ✅ Get user role
-  const role = data.user?.role;
+        const role = data.user?.role;
 
-  // ✅ If cashier or shop_staff → billing
-  if (role === "Cashier" || role === "shop_staff") {
-    navigate("/billing");
-  } else {
-    // ✅ Other users → dashboard
-    navigate("dashboard");
-  }
-}, 1200);
+        if (role === "Cashier" || role === "shop_staff") {
+          navigate("/billing");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 1200);
 
     } catch (err) {
       Swal.fire({
@@ -90,32 +89,31 @@ const Login = () => {
 
           <div style={{ position: "relative" }}>
 
-  <input
-    type={showPassword ? "text" : "password"}
-    placeholder="Password"
-    className="form-control mb-3"
-    value={form.password}
-    onChange={(e) =>
-      setForm({ ...form, password: e.target.value })
-    }
-  />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="form-control mb-3"
+              value={form.password}
+              onChange={(e) =>
+                setForm({ ...form, password: e.target.value })
+              }
+            />
 
-  {/* 👁 Eye Icon */}
-  <span
-    onClick={() => setShowPassword(!showPassword)}
-    style={{
-      position: "absolute",
-      right: "12px",
-      top: "50%",
-      transform: "translateY(-50%)",
-      cursor: "pointer",
-      fontSize: "18px",
-    }}
-  >
-    {showPassword ? "🙈" : "👁️"}
-  </span>
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                fontSize: "18px",
+              }}
+            >
+              {showPassword ? "🙈" : "👁️"}
+            </span>
 
-</div>
+          </div>
 
           <button className="login-btn" onClick={handleLogin}>
             🔐 Sign In

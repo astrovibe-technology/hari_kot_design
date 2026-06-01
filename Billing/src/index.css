@@ -323,6 +323,7 @@ body {
   gap: 12px;
 
   box-shadow: inset 0 0 25px rgba(0,0,0,0.05);
+    height: 100vh;
 }
 
 /* SEARCH */
@@ -377,53 +378,39 @@ body {
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
 }
 /* ===== PRODUCTS ===== */
-/* PRODUCTS GRID */
 .products {
-  flex: 1;
-  overflow-y: auto;
-
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); /* 🔥 smaller */
-  gap: 8px; /* tighter */
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  padding: 10px;
+  justify-items: center;
 }
 
-/* PRODUCT CARD */
 .product-card {
-  background: white;
-  padding: 2px;                
+  width: 130px;
+  min-height: 120px;
+
+  background: #fff;
+  border: 1px solid #ddd;
   border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-
-  min-height: 100px;           
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  transition: 0.2s ease;
-
-  box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+  padding: 18px;
+  box-sizing: border-box;
 }
 
-/* HOVER */
-.product-card:hover {
-  transform: scale(1.05);
-  background: #f0f9ff;
-}
-
-/* NAME */
 .product-name {
-  font-size: 15px;              /* 🔥 smaller */
+  display: block;
+  width: 100%;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
-/* PRICE */
 .product-price {
-  font-size: 13px;
-  color: #2563eb;
-  margin-top: 2px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: bold;
 }
 /* ===== RIGHT PANEL (BILL AREA) ===== */
 /* .right-panel {
@@ -657,30 +644,6 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* PRODUCTS */
-.products {
-  flex: 1;
-  overflow-y: auto;
-
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-  gap: 8px;
-}
-
-.product-card {
-  height: 50px;
-  background: white;
-  border-radius: 8px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  font-size: 11px;
-  cursor: pointer;
-
-  transition: 0.2s;
-}
 
 .product-card:hover {
   background: #dbeafe;
@@ -1308,6 +1271,15 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 12px;
   padding: 15px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+
+  max-height: calc(100vh - 180px);
+  overflow: hidden;
+}
+
+.table-responsive {
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 table {
