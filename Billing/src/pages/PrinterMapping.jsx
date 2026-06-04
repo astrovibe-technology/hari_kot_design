@@ -118,7 +118,7 @@ const PrinterMapping = () => {
         category_id: Number(form.category_id),
         shop_id: user.shop_id || null,
       };
-
+      console.log("PAYLOAD =>", payload);
       let url = `${API}/printers/create`;
       let method = "POST";
 

@@ -245,8 +245,33 @@ const Billing = () => {
       console.log("Single Bill Print Error:", err);
     }
   };
-  const printSingleKOT = async (billNumber) => { try { await fetch("http://localhost:8001/print-kot", { method: "POST", headers: { "Content-Type": "application/json", }, body: JSON.stringify({ inv_number: billNumber, category_name: "ALL", items: cart.map((item) => ({ item_name: item.item_name || item.name, quantity: item.qty, unit: item.unit, })), }), }); console.log("SINGLE KOT PRINTED"); } catch (err) { console.log(err); } };
-  // CATEGORY WISE PRINT FUNCTION (NO DESIGN CHANGE)
+ const printSingleKOT = async (billNumber) => {
+  try {
+    const categoryId =
+      cart.length > 0 ? cart[0].category_id : null;
+
+    await fetch("http://localhost:8001/print-kot", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        inv_number: billNumber,
+        category_id: categoryId,
+        category_name: "ALL",
+        items: cart.map((item) => ({
+          item_name: item.item_name || item.name,
+          quantity: item.qty,
+          unit: item.unit,
+        })),
+      }),
+    });
+
+    console.log("SINGLE KOT PRINTED", categoryId);
+  } catch (err) {
+    console.log("KOT Print Error:", err);
+  }
+};
   // const printCategoryWiseBills = async (billNumber) => {
   //   if (cart.length === 0) return;
 
@@ -287,137 +312,141 @@ const Billing = () => {
   // ===============================================
   const printCategoryWiseBills = async (billNumber) => {
 
-    if (cart.length === 0) return;
+  if (cart.length === 0) return;
+
+  // ==========================================
+  // GROUP CATEGORY WISE
+  // ==========================================
+  const grouped = {};
+
+  cart.forEach((item) => {
+
+    const category = item.category || "Others";
+
+    if (!grouped[category]) {
+      grouped[category] = {
+        category_id: item.category_id,
+        items: []
+      };
+    }
+
+    grouped[category].items.push(item);
+
+  });
+
+  // ==========================================
+  // LOOP CATEGORY
+  // ==========================================
+  for (const category of Object.keys(grouped)) {
+
+    const categoryItems = grouped[category].items;
+
+    const categoryId = grouped[category].category_id;
 
     // ==========================================
-    // GROUP CATEGORY WISE
+    // CUSTOMER BILL PRINT
     // ==========================================
-    const grouped = {};
+    try {
 
-    cart.forEach((item) => {
+      await fetch("http://localhost:8001/print", {
 
-      const category = item.category || "Others";
+        method: "POST",
 
-      if (!grouped[category]) {
-        grouped[category] = [];
-      }
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-      grouped[category].push(item);
+        body: JSON.stringify({
 
-    });
+          bill_no: billNumber,
 
-    // ==========================================
-    // LOOP CATEGORY
-    // ==========================================
-    for (const category of Object.keys(grouped)) {
+          category: category,
 
-      const categoryItems = grouped[category];
+          customer_name:
+            customer.name || "Walk-in",
 
-      // ==========================================
-      // CUSTOMER BILL PRINT
-      // ==========================================
-      try {
+          customer_phone:
+            customer.phone || "",
 
-        await fetch("http://localhost:8001/print", {
+          payment_mode: paymentMode,
 
-          method: "POST",
+          order_type: orderType,
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+          items: categoryItems.map((item) => ({
 
-          body: JSON.stringify({
+            name: item.item_name || item.name,
 
-            bill_no: billNumber,
+            qty: item.qty,
 
-            category: category,
+            unit: item.unit,
 
-            customer_name:
-              customer.name || "Walk-in",
-            customer_phone:
-              customer.phone || "",
+            price: item.price,
 
-            payment_mode: paymentMode,
+            gst: item.gst
 
-            order_type: orderType,
+          }))
+        }),
+      });
 
-            items: categoryItems.map((item) => ({
+    } catch (err) {
 
-              name:
-                item.item_name || item.name,
-
-              qty: item.qty,
-
-              unit: item.unit,
-
-              price: item.price,
-
-              gst: item.gst
-
-            }))
-          }),
-        });
-
-      } catch (err) {
-
-        console.log(
-          "CUSTOMER BILL PRINT ERROR:",
-          err
-        );
-      }
-
-      // ==========================================
-      // KOT PRINT
-      // ==========================================
-      try {
-
-        await fetch("http://localhost:8001/print-kot", {
-
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-
-            inv_number: billNumber,
-
-            category_name: category,
-
-            items: categoryItems.map((item) => ({
-
-              item_name:
-                item.item_name || item.name,
-
-              quantity: item.qty,
-
-              unit: item.unit
-
-            }))
-          }),
-        });
-
-        console.log(
-          `KOT SENT -> ${category}`
-        );
-
-      } catch (err) {
-
-        console.log(
-          "KOT PRINT ERROR:",
-          err
-        );
-      }
-
-      // ==========================================
-      // SMALL DELAY
-      // ==========================================
-      await new Promise((res) =>
-        setTimeout(res, 100)
+      console.log(
+        "CUSTOMER BILL PRINT ERROR:",
+        err
       );
     }
-  };
+
+    // ==========================================
+    // KOT PRINT
+    // ==========================================
+    try {
+
+      await fetch("http://localhost:8001/print-kot", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+
+          inv_number: billNumber,
+
+          category_id: categoryId,   // <-- ADD THIS
+
+          category_name: category,
+
+          items: categoryItems.map((item) => ({
+
+            item_name:
+              item.item_name || item.name,
+
+            quantity: item.qty,
+
+            unit: item.unit
+
+          }))
+        }),
+      });
+
+      console.log(
+        `KOT SENT -> ${category} (${categoryId})`
+      );
+
+    } catch (err) {
+
+      console.log(
+        "KOT PRINT ERROR:",
+        err
+      );
+    }
+
+    await new Promise((res) =>
+      setTimeout(res, 100)
+    );
+  }
+};
   const totalGST = cart.reduce(
     (sum, item) => {
       const amount =
@@ -655,22 +684,6 @@ const Billing = () => {
               key={p.id}
               className="product-card"
               onClick={() =>
-                //  addToCart({
-                //   id: p.id,
-                //   name: p.item_name,
-                //   price: p.price,
-                //   gst: p.gst_percent,
-
-                //   category:
-                //     p.category_name ||
-                //     categories.find(c => c.id === activeCat)?.category_name ||
-                //     "Others",
-
-                //   // ✅ ADD THIS
-                //   shop_id: p.shop_id,
-
-                //   shop_ids: p.shop_ids || [p.shop_id]
-                // })
                 addToCart({
                   id: p.id,
 
